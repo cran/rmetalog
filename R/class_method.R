@@ -10,6 +10,7 @@
 #'
 #' @examples
 #' # Load example data
+#' \dontrun{
 #' data("fishSize")
 #'
 #' # Create a bounded metalog object
@@ -21,6 +22,7 @@
 #'
 #' s <- rmetalog(myMetalog, n=1000, term = 9)
 #' hist(s)
+#' }
 rmetalog <- function(m, n = 1, term = 3) {
   UseMethod("rmetalog", m)
 }
@@ -34,6 +36,7 @@ rmetalog.default <- function(m, n = 1, term = 3) {
 rmetalog.metalog <- function(m, n = 1, term = 3){
   # Input validation
   valid_terms <- m$Validation$term
+  valid_terms_printout <- paste(valid_terms, collapse = " ")
   if (class(n) != 'numeric' | n < 1 | n %% 1 != 0) {
     stop('Error: n must be a positive numeric interger')
   }
@@ -41,11 +44,8 @@ rmetalog.metalog <- function(m, n = 1, term = 3){
       term < 2 | term %% 1 != 0 | !(term %in% valid_terms) |
       length(term) > 1) {
     stop(
-      paste(
-        'Error: term must be a single positive numeric interger",
-        "contained in the metalog object. Available terms are:',
-        valid_terms
-      )
+      paste('Error: term must be a single positive numeric interger contained',
+            'in the metalog object. Available terms are:', valid_terms_printout)
     )
   }
   x <- stats::runif(n)
@@ -53,7 +53,10 @@ rmetalog.metalog <- function(m, n = 1, term = 3){
 
   # Construct initial Y Matrix values
   Y$y2 <- (log(x / (1 - x)))
-  Y$y3 <- (x - 0.5) * Y$y2
+
+  if (term > 2) {
+    Y$y3 <- (x - 0.5) * Y$y2
+  }
 
   if (term > 3) {
     Y$y4 <- x - 0.5
@@ -76,7 +79,7 @@ rmetalog.metalog <- function(m, n = 1, term = 3){
   Y <- as.matrix(Y)
   amat <- paste0('a', term)
   a <- as.matrix(m$A[`amat`])
-  s <- Y %*% a
+  s <- Y %*% a[1:term]
 
   if (m$params$boundedness == 'sl') {
     s <- m$params$bounds[1] + exp(s)
@@ -109,6 +112,7 @@ rmetalog.metalog <- function(m, n = 1, term = 3){
 #'
 #' @examples
 #' # Load example data
+#' \dontrun{
 #' data("fishSize")
 #'
 #' # Create a bounded metalog object
@@ -119,6 +123,7 @@ rmetalog.metalog <- function(m, n = 1, term = 3){
 #'                      term_lower_bound = 9)
 #'
 #' s <- qmetalog(myMetalog,y=c(0.25,0.5,0.7),term = 9)
+#' }
 qmetalog <- function(m, y, term = 3) {
   UseMethod("qmetalog", m)
 }
@@ -132,6 +137,7 @@ qmetalog.default <- function(m, y, term = 3){
 qmetalog.metalog <- function(m, y, term = 3){
   # Input validation
   valid_terms <- m$Validation$term
+  valid_terms_printout <- paste(valid_terms, collapse = " ")
   if (class(y) != 'numeric' | max(y) >= 1 | min(y) <= 0) {
     stop('Error: y must be a positive numeric vector between 0 and 1')
   }
@@ -141,8 +147,7 @@ qmetalog.metalog <- function(m, y, term = 3){
       length(term) > 1) {
     stop(
       paste('Error: term must be a single positive numeric interger contained',
-            'in the metalog object. Available terms are:',
-            valid_terms)
+            'in the metalog object. Available terms are:', valid_terms_printout)
     )
   }
 
@@ -150,7 +155,10 @@ qmetalog.metalog <- function(m, y, term = 3){
 
   # Construct the Y Matrix initial values
   Y$y2 <- (log(y / (1 - y)))
-  Y$y3 <- (y - 0.5) * Y$y2
+
+  if (term > 2) {
+    Y$y3 <- (y - 0.5) * Y$y2
+  }
 
   if (term > 3) {
     Y$y4 <- (y - 0.5)
@@ -173,7 +181,7 @@ qmetalog.metalog <- function(m, y, term = 3){
   Y <- as.matrix(Y)
   amat <- paste0('a', term)
   a <- as.matrix(m$A[`amat`])
-  s <- Y %*% a
+  s <- Y %*% a[1:term]
 
   if (m$params$boundedness == 'sl') {
     s <- m$params$bounds[1] + exp(s)
@@ -204,6 +212,7 @@ qmetalog.metalog <- function(m, y, term = 3){
 #'
 #' @examples
 #' # Load example data
+#' \dontrun{
 #' data("fishSize")
 #'
 #' # Create a bounded metalog object
@@ -214,6 +223,7 @@ qmetalog.metalog <- function(m, y, term = 3){
 #'                      term_lower_bound = 9)
 #'
 #' s <- pmetalog(myMetalog,q=c(3,10,25),term = 9)
+#' }
 pmetalog <- function(m, q, term = 3) {
   UseMethod("pmetalog", m)
 }
@@ -234,7 +244,7 @@ pmetalog.metalog <- function(m, q, term = 3){
       term < 2 | term %% 1 != 0 | !(term %in% valid_terms) |
       length(term) > 1) {
     stop(
-      paste('Error: term must be a single positive numeric interger contained',
+      cat('Error: term must be a single positive numeric interger contained',
             'in the metalog object. Available terms are:',
             valid_terms)
     )
@@ -258,6 +268,7 @@ pmetalog.metalog <- function(m, q, term = 3){
 #'
 #' @examples
 #' # Load example data
+#' \dontrun{
 #' data("fishSize")
 #'
 #' # Create a bounded metalog object
@@ -268,6 +279,7 @@ pmetalog.metalog <- function(m, q, term = 3){
 #'                      term_lower_bound = 9)
 #'
 #' s <- dmetalog(myMetalog,q=c(3,10,25),term = 9)
+#' }
 dmetalog <- function(m, q, term = 3) {
   UseMethod("dmetalog", m)
 }
@@ -310,6 +322,7 @@ dmetalog.metalog <- function(m, q, term = 3){
 #'
 #' @examples
 #' # Load example data
+#' \dontrun{
 #' data("fishSize")
 #'
 #' # Create a bounded metalog object
@@ -319,6 +332,7 @@ dmetalog.metalog <- function(m, q, term = 3){
 #'                      term_limit = 13)
 #'
 #' summary(myMetalog)
+#' }
 summary.metalog <- function(object, ...) {
   cat(' -----------------------------------------------\n',
       'Summary of Metalog Distribution Object\n',
@@ -330,6 +344,8 @@ summary.metalog <- function(object, ...) {
       'Bounds (only used based on boundedness): ', object$params$bounds, '\n',
       'Step Length for Distribution Summary: ', object$params$step_len, '\n',
       'Method Use for Fitting: ', object$params$fit_method, '\n',
+      'Number of Data Points Used: ', object$params$number_of_data, '\n',
+      'Original Data Saved: ', object$params$save_data, '\n',
       '\n\n Validation and Fit Method\n'
   )
   print(object$Validation, row.names = FALSE)
@@ -347,15 +363,18 @@ summary.metalog <- function(object, ...) {
 #'
 #' @examples
 #' # Load example data
+#' \dontrun{
 #' data("fishSize")
 #'
 #' # Create a bounded metalog object
+#'
 #' myMetalog <- metalog(fishSize$FishSize,
 #'                      bounds=c(0, 60),
 #'                      boundedness = 'b',
 #'                      term_limit = 13)
 #'
 #' plot(myMetalog)
+#' }
 plot.metalog <- function(x, ...) {
   #build plots
   InitalResults <-
@@ -401,3 +420,4 @@ plot.metalog <- function(x, ...) {
 
   list(pdf = p, cdf = q)
 }
+

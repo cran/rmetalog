@@ -36,6 +36,8 @@ if(getRversion() >= "2.15.1")
 #' @param probs (Optional) probability quantiles, same length as \code{x}
 #' @param fit_method (Optional) preferred method of fitting distribution: accepts values
 #'  \code{OLS}, \code{LP} or \code{any} (defaults to any)
+#' @param save_data (Optional) Save the original data within the metalog object. This
+#'   must be done if the distribution is to be updated with new data later.
 #'
 #' @return A \code{metalog} object with elements
 #' \item{params}{A list of the parameters used to create the metalog object}
@@ -58,6 +60,7 @@ if(getRversion() >= "2.15.1")
 #'
 #' @examples
 #' # Load example data
+#' \dontrun{
 #' data("fishSize")
 #'
 #' # Create a bounded metalog object
@@ -65,6 +68,7 @@ if(getRversion() >= "2.15.1")
 #'                      bounds=c(0, 60),
 #'                      boundedness = 'b',
 #'                      term_limit = 13)
+#'}
 metalog <- function(x,
                     bounds = c(0,1),
                     boundedness = 'u',
@@ -72,7 +76,8 @@ metalog <- function(x,
                     term_lower_bound = 2,
                     step_len = 0.01,
                     probs = NA,
-                    fit_method = 'any') {
+                    fit_method = 'any',
+                    save_data = FALSE) {
   # Input validation
   if (class(x) != 'numeric') {
     stop('Input x must be a numeric vector!')
@@ -190,6 +195,10 @@ metalog <- function(x,
     stop('Error: fit_method can only be values OLS, LP or any')
   }
 
+  if (save_data != TRUE & save_data != FALSE){
+    stop('Error: save_data must be true or false')
+  }
+
   # Create a list to hold all the objects
   myList <- list()
   myList$params$bounds <- bounds
@@ -198,6 +207,12 @@ metalog <- function(x,
   myList$params$term_lower_bound <- term_lower_bound
   myList$params$step_len <- step_len
   myList$params$fit_method <- fit_method
+  myList$params$number_of_data <- length(x)
+  myList$params$save_data <- save_data
+  if (save_data == TRUE){
+    myList$params$original_data <- x #this stores the original data for later use when bayesian updating
+  }
+
   # Handle the probabilites --- this also converts x as a data frame
   if (length(which(is.na(probs)))!=0) {
     x <- MLprobs(x, step_len = step_len)
@@ -248,6 +263,7 @@ metalog <- function(x,
     }
   }
   myList$Y <- Y
+
 
   # Build a vectors for each term and
   # build the metalog m(pdf) and M(quantile) dataframes
